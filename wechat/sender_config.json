@@ -1,0 +1,6 @@
+{
+    "input_box_type": "Edit",
+    "chat_pane_type": "Pane",
+    "scroll_delay": 0.3,
+    "max_messages": 50
+}

@@ -1,0 +1,22 @@
+# 敏感文件（最重要！）
+.env
+.env.example  # 如果你放了真实值的 example，不要 commit；但通常 example 可以 commit
+
+# 虚拟环境（如果你用了 venv）
+venv/
+.env/
+.venv/
+
+# 编辑器/IDE 文件（根据你用的添加）
+.idea/          # PyCharm
+.vscode/        # VS Code
+*.swp
+*.swo
+
+# Windows / macOS 杂项
+.DS_Store
+Thumbs.db
+
+# 项目特定（如果你有日志、临时文件等）
+*.log
+temp/
