@@ -16,11 +16,21 @@ class LLMClient:
             base_url=config.BASE_URL,
             timeout=10.0
         )
-        from persona.persona_builder import get_system_prompt
-        self.system_prompt = get_system_prompt()
 
-    def get_reply(self, history):
-        messages = [{"role": "system", "content": self.system_prompt}] + history
+    def get_reply(self, history, memory_summary=""):
+        """
+        获取 AI 回复
+        
+        参数:
+            history: 对话历史
+            memory_summary: 记忆摘要（用于增强 system prompt）
+        """
+        from persona.persona_builder import get_system_prompt
+        
+        # 动态构建包含记忆的 system prompt
+        system_prompt = get_system_prompt(memory_summary)
+        messages = [{"role": "system", "content": system_prompt}] + history
+        
         try:
             completion = self.client.chat.completions.create(
                 model=config.MODEL_NAME,
@@ -29,5 +39,5 @@ class LLMClient:
             )
             return completion.choices[0].message.content
         except Exception as e:
-            print(f"LMM Error: {e}")
+            print(f"LLM Error: {e}")
             return "呜呜，信号不好，你刚刚说什么？"

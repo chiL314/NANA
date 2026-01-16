@@ -1,6 +1,6 @@
 from wechat.wechat_app import WeChatController
 from llm.client import LLMClient
-from conversation.state import ConversationState
+from memory.memory_manager import MemoryManager
 import config
 import time
 import threading
@@ -9,10 +9,10 @@ import keyboard
 
 
 def main():
-    print("小鸟游六花 AI女友启动...")
+    print("AI女友启动...")
 
     # 步骤1：等待按空格开始校准（这个没问题，保留）
-    print("\n[*] 请确保微信聊天窗口已打开并就位。按下空格键开始校准...")
+    print("\n[*] 请确保微信聊天窗口已打开并就位。按下空格键开始校准...") 
     def on_space_press(key):
         if key == pynput_keyboard.Key.space:
             return False  # 停止监听
@@ -21,7 +21,7 @@ def main():
 
     wechat = WeChatController(config.TARGET_NAME)
     llm = LLMClient()
-    state = ConversationState()
+    memory = MemoryManager()  # 使用长期记忆系统
 
     # 校准
     wechat.calibrate()
@@ -42,34 +42,53 @@ def main():
     exit_thread = threading.Thread(target=wait_for_exit_hotkey, daemon=True)
     exit_thread.start()
 
+    # 消息计数器（用于动态记忆注入）
+    message_count = 0
+
     try:
         while running:
             new_msg = wechat.fetch_new_message()
 
             if new_msg:
                 # 防止抓到自己刚发的内容
-                if state.history and new_msg in state.history[-1]['content']:
+                history = memory.get_context_for_llm()
+                if history and new_msg in history[-1].get('content', ''):
                     continue
 
                 print(f"📩 发现新消息: {new_msg}")
-                state.add_message("user", new_msg)
+                memory.add_conversation("user", new_msg)
 
                 print("💭 六花思考中...")
-                reply = llm.get_reply(state.get_context())
+                
+                # 动态记忆注入：每 3 条消息才注入一次记忆摘要
+                message_count += 1
+                if message_count % 3 == 0:
+                    memory_summary = memory.get_memory_summary()
+                    if memory_summary:
+                        print(f"  [记忆] {memory_summary}")
+                else:
+                    memory_summary = ""
+                
+                reply = llm.get_reply(memory.get_context_for_llm(), memory_summary)
 
                 if reply:
                     wechat.send_reply(reply)
                     print(f"💖 六花回复: {reply}")
-                    state.add_message("assistant", reply)
+                    memory.add_conversation("assistant", reply)
 
             time.sleep(0.5)
 
     except Exception as e:
         print(f"\n[!] 程序异常: {e}")
+        import traceback
+        traceback.print_exc()
     finally:
+        # 保存记忆到磁盘
+        print("\n[*] 正在保存记忆...")
+        memory.save_to_disk()
+        
         # 确保鼠标键盘恢复正常
-        print("\n六花下线啦~ 再见！程序已安全退出。")
-        # 可选：加个短暂延迟让系统恢复焦点
+        print("六花下线啦~ 再见！程序已安全退出。")
         time.sleep(0.5)
 
 if __name__ == "__main__":
