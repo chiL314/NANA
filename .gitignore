@@ -17,6 +17,14 @@ venv/
 .DS_Store
 Thumbs.db
 
+# Python 缓存文件
+__pycache__/
+*.pyc
+*.pyo
+
 # 项目特定（如果你有日志、临时文件等）
 *.log
 temp/
+
+# 记忆数据文件（包含私密对话）
+memory_data.json
